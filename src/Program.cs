@@ -51,9 +51,6 @@ namespace SfmlTest
                 System.Diagnostics.Trace.TraceError("While compiling shader program: '{0}'", sb.ToString());
             }
 
-            uint texture = Gl.CreateTexture();
-            Gl.BindTexture(TextureTarget.Texture2d, texture);
-
             Gl.DetachShader(ProgramID, VertexShaderID);
             Gl.DetachShader(ProgramID, FragmentShaderID);
 
@@ -86,6 +83,10 @@ namespace SfmlTest
             Glfw.MakeContextCurrent(window);
 
             Gl.Enable(EnableCap.Multisample);
+            Gl.Enable(EnableCap.Texture2d);
+            Gl.Enable(EnableCap.Blend);
+
+            
 
             System.Diagnostics.Trace.TraceInformation($"Renderer: {Gl.GetString(StringName.Renderer)}");
             System.Diagnostics.Trace.TraceInformation($"Version:  {Gl.GetString(StringName.Version)}");
@@ -93,11 +94,19 @@ namespace SfmlTest
             uint vao= Gl.GenVertexArray();
             Gl.BindVertexArray(vao);
 
+            // float[] points = {
+            //     // Pos              color           tex
+            //     -0.5f, 0.5f, 0f,    1f, 0f, 0f,     0f, 0f,
+            //     0.5f, 0.5f, 0f,     0f, 1, 0f,      1f, 0f,
+            //     0.5f, -0.5f, 0f,    0f, 0f, 1f,     1f, 1f,
+            //     -0.5f, -0.5f, 0f,   1f, 1f, 1f,     0f, 1f
+            // };
             float[] points = {
-                -0.5f, 0.5f, 0f, 1f, 0f, 0f,
-                0.5f, 0.5f, 0f, 0f, 1, 0f,
-                0.5f, -0.5f, 0f, 0f, 0f, 1f,
-                -0.5f, -0.5f, 0f, 1f, 1f, 1f
+                // Pos              color           tex
+                -0.5f, 0.5f, 0f,    1f, 1f, 1f,     0f, 0f,
+                0.5f, 0.5f, 0f,     1f, 1f, 1f,     1f, 0f,
+                0.5f, -0.5f, 0f,    1f, 1f, 1f,     1f, 1f,
+                -0.5f, -0.5f, 0f,   1f, 1f, 1f,     0f, 1f
             };
             uint buffer = Gl.GenBuffer();
             Gl.BindBuffer(BufferTarget.ArrayBuffer, buffer);
@@ -109,21 +118,34 @@ namespace SfmlTest
             };
             uint ebo = Gl.GenBuffer();
             Gl.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-            Gl.BufferData(BufferTarget.ElementArrayBuffer, 6 * 4, elements, BufferUsage.StaticDraw);
+            Gl.BufferData(BufferTarget.ElementArrayBuffer, (uint)elements.Length * 4, elements, BufferUsage.StaticDraw);
 
-            uint tex = Gl.GenTexture();
-            Gl.BindTexture(TextureTarget.Texture2d, tex);
-            OpenGL.Objects.
+            uint texture = Gl.CreateTexture(TextureTarget.Texture2d);
+            {
+                Gl.BindTexture(TextureTarget.Texture2d, texture);
+                var image = new System.Drawing.Bitmap(".\\resources\\textures\\dirt.png");
+                System.Diagnostics.Trace.TraceInformation("Image is {0}x{1}", image.Width, image.Height);
+                var data = image.LockBits(new System.Drawing.Rectangle(0, 0, image.Width, image.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                Gl.TexImage2D(TextureTarget.Texture2d, 0, InternalFormat.Rgba, data.Width, data.Height, 0, PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+                image.UnlockBits(data);
+                Gl.TexParameter(TextureTarget.Texture2d, TextureParameterName.TextureMinFilter, Gl.NEAREST);
+                Gl.TexParameter(TextureTarget.Texture2d, TextureParameterName.TextureMagFilter, Gl.NEAREST);
+                // Gl.TexParameter(TextureTarget.Texture2d, TextureParameterName.GenerateMipmap, Gl.NEAREST_MIPMAP_NEAREST);
+                // Gl.GenerateMipmap(TextureTarget.Texture2d);
+            }
 
             uint programID = LoadShaders(".\\src\\shaders\\SimpleVertexShader.vert", ".\\src\\shaders\\SimpleFragmentShader.frag");
             Gl.UseProgram(programID);
 
             uint posAttrib = (uint)Gl.GetAttribLocation(programID, "position");
             Gl.EnableVertexAttribArray(posAttrib);
-            Gl.VertexAttribPointer(posAttrib, 3, VertexAttribType.Float, false, 6 * 4, IntPtr.Zero);
+            Gl.VertexAttribPointer(posAttrib, 3, VertexAttribType.Float, false, 8 * 4, IntPtr.Zero);
             uint colAttrib = (uint)Gl.GetAttribLocation(programID, "color");
             Gl.EnableVertexAttribArray(colAttrib);
-            Gl.VertexAttribPointer(colAttrib, 3, VertexAttribType.Float, false, 6 * 4, new IntPtr(3 * 4));
+            Gl.VertexAttribPointer(colAttrib, 3, VertexAttribType.Float, false, 8 * 4, new IntPtr(3 * 4));
+            uint texAttrib = (uint)Gl.GetAttribLocation(programID, "texcoord");
+            Gl.EnableVertexAttribArray(texAttrib);
+            Gl.VertexAttribPointer(texAttrib, 2, VertexAttribType.Float, false, 8 * 4, new IntPtr(6 * 4));
 
 
             while (!Glfw.WindowShouldClose(window))
