@@ -7,12 +7,16 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
+  <!-- <ItemGroup>
+    <ProjectReference Include="glfw\Glfw\Glfw.csproj" />
+  </ItemGroup> -->
+
   <ItemGroup>
     <PackageReference Include="OpenGL.Net" Version="0.7.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="glfw\Glfw\Glfw.csproj" />
+    <ProjectReference Include="..\OpenGL.Net\OpenGL.Net.Objects\OpenGL.Net.Objects_netstd1.4.csproj" />
   </ItemGroup>
 
 </Project>
