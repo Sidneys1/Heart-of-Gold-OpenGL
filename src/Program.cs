@@ -4,75 +4,74 @@ using Glfw3;
 
 namespace SfmlTest
 {
-    class Program
+    internal class Program
     {
-        static uint LoadShaders(string vertex_file_path, string fragment_file_path)
+        private static uint LoadShaders(string vertexFilePath, string fragmentFilePath)
         {
-            System.Diagnostics.Trace.TraceInformation("Beginning loading shaders '{0}' and '{1}'...", vertex_file_path, fragment_file_path);
-            uint VertexShaderID = Gl.CreateShader(ShaderType.VertexShader);
-            uint FragmentShaderID = Gl.CreateShader(ShaderType.FragmentShader);
+            System.Diagnostics.Trace.TraceInformation("Beginning loading shaders '{0}' and '{1}'...", vertexFilePath, fragmentFilePath);
+            uint vertexShaderId = Gl.CreateShader(ShaderType.VertexShader);
+            uint fragmentShaderId = Gl.CreateShader(ShaderType.FragmentShader);
 
-            string VertexShaderCode = System.IO.File.ReadAllText(vertex_file_path);
-            string FragmentShaderCode = System.IO.File.ReadAllText(fragment_file_path);
+            string vertexShaderCode = System.IO.File.ReadAllText(vertexFilePath);
+            string fragmentShaderCode = System.IO.File.ReadAllText(fragmentFilePath);
 
-            Gl.ShaderSource(VertexShaderID, new string[] { VertexShaderCode });
-            Gl.CompileShader(VertexShaderID);
-            int result, logLength;
-            Gl.GetShader(VertexShaderID, ShaderParameterName.CompileStatus, out result);
-            Gl.GetShader(VertexShaderID, ShaderParameterName.InfoLogLength, out logLength);
+            Gl.ShaderSource(vertexShaderId, new[] { vertexShaderCode });
+            Gl.CompileShader(vertexShaderId);
+            Gl.GetShader(vertexShaderId, ShaderParameterName.CompileStatus, out _);
+            Gl.GetShader(vertexShaderId, ShaderParameterName.InfoLogLength, out int logLength);
             if (logLength > 0)
             {
                 var sb = new System.Text.StringBuilder(logLength + 1);
-                Gl.GetShaderInfoLog(VertexShaderID, logLength, out logLength, sb);
+                Gl.GetShaderInfoLog(vertexShaderId, logLength, out logLength, sb);
                 System.Diagnostics.Trace.TraceError("While compiling Vertex shader: '{0}'", sb.ToString());
             }
 
-            Gl.ShaderSource(FragmentShaderID, new string[] { FragmentShaderCode });
-            Gl.CompileShader(FragmentShaderID);
-            Gl.GetShader(FragmentShaderID, ShaderParameterName.CompileStatus, out result);
-            Gl.GetShader(FragmentShaderID, ShaderParameterName.InfoLogLength, out logLength);
+            Gl.ShaderSource(fragmentShaderId, new[] { fragmentShaderCode });
+            Gl.CompileShader(fragmentShaderId);
+            Gl.GetShader(fragmentShaderId, ShaderParameterName.CompileStatus, out _);
+            Gl.GetShader(fragmentShaderId, ShaderParameterName.InfoLogLength, out logLength);
             if (logLength > 0)
             {
                 var sb = new System.Text.StringBuilder(logLength + 1);
-                Gl.GetShaderInfoLog(FragmentShaderID, logLength, out logLength, sb);
+                Gl.GetShaderInfoLog(fragmentShaderId, logLength, out logLength, sb);
                 System.Diagnostics.Trace.TraceError("While compiling Fragment shader: '{0}'", sb.ToString());
             }
 
-            uint ProgramID = Gl.CreateProgram();
-            Gl.AttachShader(ProgramID, VertexShaderID);
-            Gl.AttachShader(ProgramID, FragmentShaderID);
-            Gl.LinkProgram(ProgramID);
-            Gl.GetProgram(ProgramID, ProgramProperty.LinkStatus, out result);
-            Gl.GetProgram(ProgramID, ProgramProperty.InfoLogLength, out logLength);
+            uint programId = Gl.CreateProgram();
+            Gl.AttachShader(programId, vertexShaderId);
+            Gl.AttachShader(programId, fragmentShaderId);
+            Gl.LinkProgram(programId);
+            Gl.GetProgram(programId, ProgramProperty.LinkStatus, out _);
+            Gl.GetProgram(programId, ProgramProperty.InfoLogLength, out logLength);
             if (logLength > 0)
             {
                 var sb = new System.Text.StringBuilder(logLength + 1);
-                Gl.GetProgramInfoLog(ProgramID, logLength, out logLength, sb);
+                Gl.GetProgramInfoLog(programId, logLength, out logLength, sb);
                 System.Diagnostics.Trace.TraceError("While compiling shader program: '{0}'", sb.ToString());
             }
 
-            Gl.DetachShader(ProgramID, VertexShaderID);
-            Gl.DetachShader(ProgramID, FragmentShaderID);
+            Gl.DetachShader(programId, vertexShaderId);
+            Gl.DetachShader(programId, fragmentShaderId);
 
-            Gl.DeleteShader(VertexShaderID);
-            Gl.DeleteShader(FragmentShaderID);
+            Gl.DeleteShader(vertexShaderId);
+            Gl.DeleteShader(fragmentShaderId);
 
             System.Diagnostics.Trace.TraceInformation("Finished compiling shaders.");
 
-            return ProgramID;
+            return programId;
         }
 
-        static void Main(string[] args)
+        private static void Main()
         {
             Console.WriteLine("Hello World!");
 
-            if (!Glfw3.Glfw.Init())
+            if (!Glfw.Init())
                 Environment.Exit(-1);
 
             Glfw.WindowHint(Glfw.Hint.Resizable, false);
             Glfw.WindowHint(Glfw.Hint.Doublebuffer, true);
             Glfw.WindowHint(Glfw.Hint.Samples, 4);
-            var window = Glfw.CreateWindow(1280, 720, "Hello World!");
+            Glfw.Window window = Glfw.CreateWindow(1280, 720, "Hello World!");
             if (!window)
             {
                 Glfw.Terminate();
@@ -125,7 +124,7 @@ namespace SfmlTest
                 Gl.BindTexture(TextureTarget.Texture2d, texture);
                 var image = new System.Drawing.Bitmap(".\\resources\\textures\\dirt.png");
                 System.Diagnostics.Trace.TraceInformation("Image is {0}x{1}", image.Width, image.Height);
-                var data = image.LockBits(new System.Drawing.Rectangle(0, 0, image.Width, image.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                System.Drawing.Imaging.BitmapData data = image.LockBits(new System.Drawing.Rectangle(0, 0, image.Width, image.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                 Gl.TexImage2D(TextureTarget.Texture2d, 0, InternalFormat.Rgba, data.Width, data.Height, 0, PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
                 image.UnlockBits(data);
                 Gl.TexParameter(TextureTarget.Texture2d, TextureParameterName.TextureMinFilter, Gl.NEAREST);
@@ -134,16 +133,16 @@ namespace SfmlTest
                 // Gl.GenerateMipmap(TextureTarget.Texture2d);
             }
 
-            uint programID = LoadShaders(".\\src\\shaders\\SimpleVertexShader.vert", ".\\src\\shaders\\SimpleFragmentShader.frag");
-            Gl.UseProgram(programID);
+            uint programId = LoadShaders(".\\src\\shaders\\SimpleVertexShader.vert", ".\\src\\shaders\\SimpleFragmentShader.frag");
+            Gl.UseProgram(programId);
 
-            uint posAttrib = (uint)Gl.GetAttribLocation(programID, "position");
+            var posAttrib = (uint)Gl.GetAttribLocation(programId, "position");
             Gl.EnableVertexAttribArray(posAttrib);
             Gl.VertexAttribPointer(posAttrib, 3, VertexAttribType.Float, false, 8 * 4, IntPtr.Zero);
-            uint colAttrib = (uint)Gl.GetAttribLocation(programID, "color");
+            var colAttrib = (uint)Gl.GetAttribLocation(programId, "color");
             Gl.EnableVertexAttribArray(colAttrib);
             Gl.VertexAttribPointer(colAttrib, 3, VertexAttribType.Float, false, 8 * 4, new IntPtr(3 * 4));
-            uint texAttrib = (uint)Gl.GetAttribLocation(programID, "texcoord");
+            var texAttrib = (uint)Gl.GetAttribLocation(programId, "texcoord");
             Gl.EnableVertexAttribArray(texAttrib);
             Gl.VertexAttribPointer(texAttrib, 2, VertexAttribType.Float, false, 8 * 4, new IntPtr(6 * 4));
 
@@ -167,7 +166,7 @@ namespace SfmlTest
 
             Console.WriteLine("Exiting...");
 
-            Gl.DeleteProgram(programID);
+            Gl.DeleteProgram(programId);
             Gl.DeleteBuffers(buffer);
             Gl.DeleteVertexArrays(vao);
 
